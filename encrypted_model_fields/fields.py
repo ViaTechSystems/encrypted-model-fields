@@ -1,14 +1,13 @@
 from __future__ import unicode_literals
-
 import django.db
 import django.db.models
-from django.utils.six import PY2, string_types
+# from django.utils.six import PY2, string_types
 from django.utils.functional import cached_property
 from django.core import validators
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-
 import cryptography.fernet
+from six import string_types, PY2, text_type
 
 
 def parse_key(key):
@@ -76,7 +75,7 @@ class EncryptedMixin(object):
 
         return super(EncryptedMixin, self).to_python(value)
 
-    def from_db_value(self, value, expression, connection):
+    def from_db_value(self, value, expression, connection, context):
         return self.to_python(value)
 
     def get_db_prep_save(self, value, connection):
@@ -85,7 +84,7 @@ class EncryptedMixin(object):
         if value is None:
             return value
         if PY2:
-            return encrypt_str(unicode(value))
+            return encrypt_str(text_type(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
         return (encrypt_str(str(value))).decode('utf-8')
 
@@ -130,8 +129,8 @@ class EncryptedBooleanField(EncryptedMixin, django.db.models.BooleanField):
             value = '1'
         elif value is False:
             value = '0'
-        if PY2:
-            return encrypt_str(unicode(value))
+        # if PY2:
+        #     return encrypt_str(unicode(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
         return encrypt_str(str(value)).decode('utf-8')
 
@@ -145,8 +144,8 @@ class EncryptedNullBooleanField(EncryptedMixin, django.db.models.NullBooleanFiel
             value = '1'
         elif value is False:
             value = '0'
-        if PY2:
-            return encrypt_str(unicode(value))
+        # if PY2:
+        #     return encrypt_str(unicode(value))
         # decode the encrypted value to a unicode string, else this breaks in pgsql
         return encrypt_str(str(value)).decode('utf-8')
 
@@ -189,3 +188,4 @@ class EncryptedPositiveSmallIntegerField(EncryptedNumberMixin, django.db.models.
 
 class EncryptedBigIntegerField(EncryptedNumberMixin, django.db.models.BigIntegerField):
     pass
+
